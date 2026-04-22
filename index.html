@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sandbox Ultra - Physics Engine</title>
+    <style>
+        body { background: #050505; color: #eee; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; overflow: hidden; }
+        .ui { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px; background: #1a1a1a; width: 100%; justify-content: center; border-bottom: 2px solid #555; }
+        button { border: 1px solid #444; background: #222; color: #fff; padding: 6px 12px; cursor: pointer; font-size: 11px; border-radius: 4px; font-weight: bold; }
+        button.active { background: #007bff; border-color: #fff; box-shadow: 0 0 8px #007bff; }
+        canvas { border: 2px solid #333; background: #000; image-rendering: pixelated; margin-top: 10px; cursor: crosshair; }
+        .stats { position: fixed; bottom: 15px; left: 15px; background: rgba(0,0,0,0.9); padding: 12px; border: 1px solid #444; font-family: monospace; font-size: 12px; }
+        .tip { color: #888; font-size: 10px; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="ui" id="toolbar">
+        <button onclick="setM('sand')" id="btn-sand">Sand</button>
+        <button onclick="setM('water')" id="btn-water" style="color:#4fa1ff">Water</button>
+        <button onclick="setM('lava')" id="btn-lava" style="color:#ff4500">Lava</button>
+        <button onclick="setM('ice')" id="btn-ice" style="color:#aaddff">Ice</button>
+        <button onclick="setM('rock')" id="btn-rock">Rock</button>
+        <button onclick="setM('gunpowder')" id="btn-gunpowder" style="color:#999">Gunpowder</button>
+        <button onclick="setM('methane')" id="btn-methane" style="color:#44ffaa">Methane</button>
+        <button onclick="setM('nuke')" id="btn-nuke" style="background:#ff0; color:#000">NUKE ☢️</button>
+        <button onclick="setM('alive')" id="btn-alive" style="color:#0f0">Alive</button>
+        <button onclick="setM('heat')" style="color:orange">Heat</button>
+        <button onclick="setM('cool')" style="color:cyan">Cool</button>
+        <button onclick="setM('empty')">Eraser</button>
+        <button onclick="resetGrid()" style="background:#500">Clear</button>
+    </div>
+
+    <canvas id="c"></canvas>
+
+    <div class="stats">
+        [ MAT : <span id="m-ui">AIR</span> ]<br>
+        [ TEMP: <span id="t-ui">20</span>°C ]<br>
+        [ SIZE: <span id="s-ui">1</span> ] (Press 1-4)<br>
+        <div class="tip">Lava + Water = Steam!</div>
+    </div>
+
+<script>
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const S = 100, P = 6;
+    canvas.width = S * P; canvas.height = S * P;
+
+    let grid = Array(S).fill().map(() => Array(S).fill('empty'));
+    let temp = Array(S).fill().map(() => Array(S).fill(20));
+    let cur = 'sand', mD = false, mx = 0, my = 0, brushR = 1;
+
+    const mats = {
+        empty: { c: '#000', grav: false },
+        sand: { c: '#edc9af', grav: true },
+        water: { c: '#0066ff', grav: true },
+        lava: { c: '#ff4500', grav: true },
+        ice: { c: '#aaddff', grav: false },
+        rock: { c: '#666', grav: false },
+        gunpowder: { c: '#555', grav: true },
+        methane: { c: '#22ffaa22', grav: false, gas: true },
+        nuke: { c: '#ffff00', grav: true },
+        alive: { c: '#0f0', grav: true },
+        fire: { c: '#ff6600', life: 15 },
+        smoke: { c: '#666', life: 60 }
+    };
+
+    // Näppäinkomennot koon muuttamiseen
+    window.addEventListener('keydown', (e) => {
+        if(e.key >= '1' && e.key <= '4') brushR = parseInt(e.key);
+        document.getElementById('s-ui').innerText = brushR;
+    });
+
+    function setM(m) { 
+        cur = m; 
+        document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        document.getElementById('btn-'+m)?.classList.add('active');
+    }
+
+    function resetGrid() { grid = grid.map(r => r.fill('empty')); temp = temp.map(r => r.fill(20)); }
+
+    canvas.onmousedown = () => mD = true;
+    window.onmouseup = () => mD = false;
+    window.onmousemove = (e) => {
+        const r = canvas.getBoundingClientRect();
+        mx = Math.floor((e.clientX - r.left) / P);
+        my = Math.floor((e.clientY - r.top) / P);
+        if(mD && mx>=0 && mx<S && my>=0 && my<S) {
+            let rad = brushR - 1;
+            for(let i=-rad; i<=rad; i++) for(let j=-rad; j<=rad; j++) {
+                let nx=mx+i, ny=my+j;
+                if(nx>=0 && nx<S && ny>=0 && ny<S) {
+                    if(cur === 'heat') temp[nx][ny] += 400;
+                    else if(cur === 'cool') temp[nx][ny] -= 400;
+                    else if(cur === 'empty' || grid[nx][ny] === 'empty') {
+                        grid[nx][ny] = cur;
+                        if(cur === 'lava') temp[nx][ny] = 800;
+                        if(cur === 'ice') temp[nx][ny] = -50;
+                    }
+                }
+            }
+        }
+    };
+
+    function update() {
+        let next = grid.map(r => [...r]);
+        for(let y=S-1; y>=0; y--) {
+            for(let x=0; x<S; x++) {
+                let m = grid[x][y];
+                if(m === 'empty') continue;
+
+                // Lava + Water Interaction
+                if(m === 'lava') {
+                    [[0,1],[0,-1],[1,0],[-1,0]].forEach(([dx,dy]) => {
+                        let nx=x+dx, ny=y+dy;
+                        if(nx>=0 && nx<S && ny>=0 && ny<S) {
+                            if(grid[nx][ny] === 'water') {
+                                next[nx][ny] = 'smoke'; // Muuttuu höyryksi
+                                next[x][y] = 'rock'; // Laava jähmettyy
+                            }
+                        }
+                    });
+                }
+
+                // Explosives (Gunpowder & Nuke)
+                if((m === 'gunpowder' && temp[x][y] > 200) || (m === 'nuke' && temp[x][y] > 300)) {
+                    let range = m === 'nuke' ? 35 : 6;
+                    for(let i=-range; i<=range; i++) for(let j=-range; j<=range; j++) {
+                        let nx=x+i, ny=y+j;
+                        if(nx>=0 && nx<S && ny>=0 && ny<S && Math.sqrt(i*i+j*j) < range) {
+                            next[nx][ny] = Math.random() > 0.4 ? 'fire' : 'smoke';
+                            temp[nx][ny] = m === 'nuke' ? 5000 : 800;
+                        }
+                    }
+                }
+
+                // Methane explosion
+                if(m === 'methane' && temp[x][y] > 100) { next[x][y] = 'fire'; }
+
+                // Basic Gravity
+                if(mats[m].grav && y < S-1) {
+                    if(grid[x][y+1] === 'empty') {
+                        next[x][y] = 'empty'; next[x][y+1] = m;
+                    } else if(grid[x][y+1] !== 'rock') { // Pinoutuminen
+                        let d = Math.random() > 0.5 ? 1 : -1;
+                        if(x+d>=0 && x+d<S && grid[x+d][y+1] === 'empty') {
+                            next[x][y] = 'empty'; next[x+d][y+1] = m;
+                        }
+                    }
+                }
+
+                // Alive Pixels
+                if(m === 'alive') {
+                    let dx = Math.floor(Math.random()*3)-1;
+                    let dy = Math.floor(Math.random()*3)-1;
+                    if(x+dx>=0 && x+dx<S && y+dy>=0 && y+dy<S && grid[x+dx][y+dy] === 'empty') {
+                        next[x][y] = 'empty'; next[x+dx][y+dy] = 'alive';
+                    }
+                }
+
+                // Gases rising (Smoke, Methane)
+                if(mats[m].gas || m === 'smoke' || m === 'fire') {
+                    if(y > 0) {
+                        let dx = Math.floor(Math.random()*3)-1;
+                        if(x+dx>=0 && x+dx<S && grid[x+dx][y-1] === 'empty') {
+                            next[x][y] = 'empty'; next[x+dx][y-1] = m;
+                        }
+                    }
+                    if(Math.random() > 0.95) next[x][y] = 'empty';
+                }
+            }
+        }
+        grid = next;
+        // Jäähtyminen
+        for(let i=0; i<S; i++) for(let j=0; j<S; j++) {
+            if(temp[i][j] > 20) temp[i][j] -= 2;
+            if(temp[i][j] < 20) temp[i][j] += 1;
+        }
+    }
+
+    function draw() {
+        ctx.fillStyle = '#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+        for(let x=0; x<S; x++) for(let y=0; y<S; y++) {
+            if(grid[x][y] !== 'empty') {
+                ctx.fillStyle = mats[grid[x][y]].c;
+                ctx.fillRect(x*P, y*P, P, P);
+            }
+        }
+        if(mx>=0 && mx<S && my>=0 && my<S) {
+            document.getElementById('m-ui').innerText = grid[mx][my].toUpperCase();
+            document.getElementById('t-ui').innerText = Math.floor(temp[mx][my]);
+        }
+        update(); requestAnimationFrame(draw);
+    }
+    setM('sand'); draw();
+</script>
+</body>
+</html>
