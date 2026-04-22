@@ -2,144 +2,185 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sandbox game</title>
+    <title>Sandboxels - Physics Engine</title>
     <style>
-        :root {
-            --primary: #00ff00;
-            --bg: #0a0a0a;
-            --card: #151515;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg);
-            color: white;
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            overflow-x: hidden;
-        }
-
-        /* Hero Section */
-        .hero {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
-            background-size: cover;
-            text-align: center;
-        }
-
-        h1 {
-            font-size: 4rem;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 5px;
-            color: var(--primary);
-            text-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
-        }
-
-        .play-btn {
-            padding: 20px 50px;
-            font-size: 1.5rem;
-            background: var(--primary);
-            color: black;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: bold;
-            text-decoration: none;
-            transition: 0.3s;
-            box-shadow: 0 0 15px var(--primary);
-            margin-top: 30px;
-        }
-
-        .play-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 30px var(--primary);
-        }
-
-        /* About Section */
-        .container {
-            max-width: 900px;
-            margin: 50px auto;
-            padding: 20px;
-        }
-
-        .card {
-            background: var(--card);
-            padding: 30px;
-            border-radius: 15px;
-            border-left: 5px solid var(--primary);
-            margin-bottom: 30px;
-        }
-
-        h2 { color: var(--primary); }
-
-        /* Contact Form */
-        input, textarea {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            background: #222;
-            border: 1px solid #444;
-            color: white;
-            border-radius: 5px;
-        }
-
-        .send-btn {
-            background: #333;
-            color: var(--primary);
-            border: 1px solid var(--primary);
-            padding: 10px 25px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        footer {
-            text-align: center;
-            padding: 40px;
-            color: #555;
-            border-top: 1px solid #222;
-        }
+        body { background: #0a0a0a; color: #eee; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; overflow: hidden; }
+        .ui { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px; background: #151515; width: 100%; justify-content: center; border-bottom: 2px solid #00ff00; }
+        button { border: 1px solid #333; background: #222; color: #bbb; padding: 8px 12px; cursor: pointer; font-size: 11px; border-radius: 4px; transition: 0.2s; font-weight: bold; }
+        button:hover { background: #333; color: #fff; }
+        button.active { background: #00ff00; color: #000; box-shadow: 0 0 10px #00ff00; }
+        canvas { border: 2px solid #333; background: #000; image-rendering: pixelated; margin-top: 10px; cursor: crosshair; }
+        .stats { position: fixed; bottom: 15px; left: 15px; background: rgba(0,0,0,0.9); padding: 12px; border-radius: 5px; border-left: 5px solid #00ff00; font-family: monospace; font-size: 12px; }
     </style>
 </head>
 <body>
 
-    <section class="hero">
-        <h1>SANDBOXELS :)</h1>
-        <p>2D physics game </p>
-        <a href="game.html" class="play-btn">PLAY GAME</a>
-    </section>
-
-    <div class="container">
-        <section class="card">
-            <h2>About the Creator</h2>
-            <p>Welcome to my simulation world! Sandboxels was built to push the limits of web-based physics engines.</p>
-            <ul>
-                <li><strong>Engine:</strong> Custom JavaScript</li>
-                <li><strong>Features:</strong> Thermal dynamics, fluid simulation, and nuclear physics.</li>
-               
-            </ul>
-        </section>
-
-        <section class="card">
-            <h2>Contact & Support</h2>
-            <p>Found a bug or have a suggestion? Reach out to me! (this form doesnt wor yet!)</p>
-            <form action="#">
-                <input type="text" placeholder="Your Name" required>
-                <input type="email" placeholder="Your email" required>
-                <textarea placeholder="Your Message..." rows="5" required></textarea>
-                <button type="submit" class="send-btn">SEND MESSAGE</button>
-            </form>
-        </section>
+    <div class="ui">
+        <button onclick="setM('sand')" id="btn-sand">Sand</button>
+        <button onclick="setM('water')" id="btn-water" style="color:#4fa1ff">Water</button>
+        <button onclick="setM('rock')" id="btn-rock">Rock</button>
+        <button onclick="setM('lava')" id="btn-lava" style="color:#ff4500">Lava</button>
+        <button onclick="setM('alive')" id="btn-alive" style="color:#0f0">Alive Pixel</button>
+        <button onclick="setM('acid')" id="btn-acid" style="color:#a2ff00">Acid</button>
+        <button onclick="setM('nuke')" id="btn-nuke" style="background:#ff0; color:#000">NUKE ☢️</button>
+        <button onclick="setM('heat')" id="btn-heat" style="color:orange">Heat Tool</button>
+        <button onclick="setM('cool')" id="btn-cool" style="color:cyan">Cool Tool</button>
+        <button onclick="setM('empty')">Eraser</button>
+        <button onclick="resetGrid()" style="background:#500; color:white">Reset World</button>
     </div>
 
-    <footer>
-        <p>&copy; 2026 Veeti Savolainen MOs Games. All rights reserved.</p>
-    </footer>
+    <canvas id="c"></canvas>
 
+    <div class="stats">
+        MATERIAL: <span id="m-ui">AIR</span><br>
+        TEMP: <span id="t-ui">20</span>°C<br>
+        BRUSH: <span id="s-ui">1</span> (Press 1-4)
+    </div>
+
+<script>
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const S = 100, P = 6;
+    canvas.width = S * P; canvas.height = S * P;
+
+    let grid = Array(S).fill().map(() => Array(S).fill('empty'));
+    let temp = Array(S).fill().map(() => Array(S).fill(20));
+    let cur = 'sand', mD = false, mx = 0, my = 0, brushR = 1;
+
+    const mats = {
+        empty: { c: '#000', grav: false },
+        sand: { c: '#edc9af', grav: true, melt: 1200, to: 'lava' },
+        water: { c: '#0066ff', grav: true, liquid: true, boil: 100, to: 'steam' },
+        rock: { c: '#666', grav: false, melt: 1000, to: 'lava' },
+        lava: { c: '#ff4500', grav: true, liquid: true, cool: 500, to: 'rock' },
+        acid: { c: '#a2ff00', grav: true, liquid: true },
+        alive: { c: '#0f0', grav: false },
+        nuke: { c: '#ffff00', grav: true },
+        steam: { c: '#ffffff55', gas: true, life: 60 },
+        fire: { c: '#ff6600', life: 20 },
+        smoke: { c: '#444', life: 40 }
+    };
+
+    window.addEventListener('keydown', (e) => {
+        if(e.key >= '1' && e.key <= '4') brushR = parseInt(e.key);
+        document.getElementById('s-ui').innerText = brushR;
+    });
+
+    function setM(m) { 
+        cur = m; 
+        document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+        document.getElementById('btn-'+m)?.classList.add('active');
+    }
+
+    function resetGrid() { grid = grid.map(r => r.fill('empty')); temp = temp.map(r => r.fill(20)); }
+
+    canvas.onmousedown = () => mD = true;
+    window.onmouseup = () => mD = false;
+    window.onmousemove = (e) => {
+        const r = canvas.getBoundingClientRect();
+        mx = Math.floor((e.clientX - r.left) / P);
+        my = Math.floor((e.clientY - r.top) / P);
+        if(mD && mx>=0 && mx<S && my>=0 && my<S) {
+            let b = brushR - 1;
+            for(let i=-b; i<=b; i++) for(let j=-b; j<=b; j++) {
+                let nx=mx+i, ny=my+j;
+                if(nx>=0 && nx<S && ny>=0 && ny<S) {
+                    if(cur === 'heat') temp[nx][ny] += 300;
+                    else if(cur === 'cool') temp[nx][ny] -= 300;
+                    else if(grid[nx][ny] === 'empty' || cur === 'empty') {
+                        grid[nx][ny] = cur;
+                        if(cur === 'lava') temp[nx][ny] = 1200;
+                    }
+                }
+            }
+        }
+    };
+
+    function update() {
+        let next = grid.map(r => [...r]);
+        for(let y=S-1; y>=0; y--) {
+            for(let x=0; x<S; x++) {
+                let m = grid[x][y];
+                if(m === 'empty') continue;
+
+                // --- LÄMPÖTILAFYSIIKKA ---
+                if(mats[m].melt && temp[x][y] > mats[m].melt) next[x][y] = mats[m].to;
+                if(mats[m].boil && temp[x][y] > mats[m].boil) next[x][y] = mats[m].to;
+                if(mats[m].cool && temp[x][y] < mats[m].cool) next[x][y] = mats[m].to;
+
+                // --- ALIVE PIXEL (Ei vilku, liikkuu rauhallisesti) ---
+                if(m === 'alive' && Math.random() > 0.8) {
+                    let dx = Math.floor(Math.random()*3)-1;
+                    let dy = Math.floor(Math.random()*3)-1;
+                    if(x+dx>=0 && x+dx<S && y+dy>=0 && y+dy<S && grid[x+dx][y+dy] === 'empty') {
+                        next[x][y] = 'empty'; next[x+dx][y+dy] = 'alive';
+                        continue;
+                    }
+                }
+
+                // --- VUOROVAIKUTUKSET ---
+                if(m === 'lava' && y < S-1 && grid[x][y+1] === 'water') {
+                    next[x][y+1] = 'steam'; next[x][y] = 'rock'; continue;
+                }
+
+                // --- GRAVITAATIO ---
+                if(mats[m].grav && y < S-1) {
+                    if(grid[x][y+1] === 'empty') {
+                        next[x][y] = 'empty'; next[x][y+1] = m;
+                    } else {
+                        let d = Math.random() > 0.5 ? 1 : -1;
+                        if(x+d>=0 && x+d<S && grid[x+d][y+1] === 'empty') {
+                            next[x][y] = 'empty'; next[x+d][y+1] = m;
+                        }
+                    }
+                }
+
+                // --- KAASUT (Höyry nousee) ---
+                if(mats[m].gas || m === 'smoke' || m === 'fire') {
+                    if(y > 0) {
+                        let dx = Math.floor(Math.random()*3)-1;
+                        if(x+dx>=0 && x+dx<S && grid[x+dx][y-1] === 'empty') {
+                            next[x][y] = 'empty'; next[x+dx][y-1] = m;
+                        }
+                    }
+                    if(Math.random() > 0.96) next[x][y] = 'empty';
+                }
+
+                // --- NUKE ---
+                if(m === 'nuke' && temp[x][y] > 200) {
+                    for(let i=-25; i<=25; i++) for(let j=-25; j<=25; j++) {
+                        let nx=x+i, ny=y+j;
+                        if(nx>=0 && nx<S && ny>=0 && ny<S && Math.sqrt(i*i+j*j)<20) {
+                            next[nx][ny] = Math.random()>0.5 ? 'fire' : 'smoke';
+                            temp[nx][ny] = 2000;
+                        }
+                    }
+                }
+            }
+        }
+        grid = next;
+        // Jäähtyminen huoneenlämpöön
+        for(let i=0; i<S; i++) for(let j=0; j<S; j++) {
+            if(temp[i][j] > 20) temp[i][j] -= 1;
+            if(temp[i][j] < 20) temp[i][j] += 1;
+        }
+    }
+
+    function draw() {
+        ctx.fillStyle = '#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+        for(let x=0; x<S; x++) for(let y=0; y<S; y++) {
+            if(grid[x][y] !== 'empty') {
+                ctx.fillStyle = mats[grid[x][y]].c;
+                ctx.fillRect(x*P, y*P, P, P);
+            }
+        }
+        if(mx>=0 && mx<S && my>=0 && my<S) {
+            document.getElementById('m-ui').innerText = grid[mx][my].toUpperCase();
+            document.getElementById('t-ui').innerText = Math.floor(temp[mx][my]);
+        }
+        update(); requestAnimationFrame(draw);
+    }
+    setM('sand'); draw();
+</script>
 </body>
 </html>
