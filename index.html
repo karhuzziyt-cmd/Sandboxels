@@ -2,14 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Sandboxels</title>
+    <title>Sandboxels - Solid Physics Edition</title>
     <style>
         body { background: #0a0a0a; color: #eee; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; overflow: hidden; }
         .ui { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px; background: #151515; width: 100%; justify-content: center; border-bottom: 2px solid #00ff00; }
         button { border: 1px solid #333; background: #222; color: #bbb; padding: 6px 10px; cursor: pointer; font-size: 11px; border-radius: 4px; font-weight: bold; }
+        button:hover { background: #333; color: #fff; }
         button.active { background: #00ff00; color: #000; box-shadow: 0 0 10px #00ff00; }
-        canvas { border: 2px solid #333; background: #000; image-rendering: pixelated; margin-top: 10px; }
-        .stats { position: fixed; bottom: 15px; left: 15px; background: rgba(0,0,0,0.9); padding: 12px; border-left: 5px solid #00ff00; font-family: monospace; font-size: 12px; }
+        canvas { border: 2px solid #333; background: #000; image-rendering: pixelated; margin-top: 10px; cursor: crosshair; }
+        .stats { position: fixed; bottom: 15px; left: 15px; background: rgba(0,0,0,0.9); padding: 12px; border-radius: 5px; border-left: 5px solid #00ff00; font-family: monospace; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -17,11 +18,12 @@
     <div class="ui">
         <button onclick="setM('sand')" id="btn-sand">Sand</button>
         <button onclick="setM('water')" id="btn-water" style="color:#4fa1ff">Water</button>
-        <button onclick="setM('oil')" id="btn-oil" style="color:#a88532">Oil</button>
+        <button onclick="setM('ice')" id="btn-ice" style="color:#aaddff">Ice ❄️</button>
         <button onclick="setM('lava')" id="btn-lava" style="color:#ff4500">Lava</button>
         <button onclick="setM('rock')" id="btn-rock">Rock</button>
-        <button onclick="setM('ice')" id="btn-ice" style="color:#aaddff">Ice</button>
-        <button onclick="setM('gunpowder')" id="btn-gunpowder">Gunpowder</button>
+        <button onclick="setM('oil')" id="btn-oil" style="color:#8a6d3b">Oil</button>
+        <button onclick="setM('gunpowder')" id="btn-gunpowder" style="color:#777">Gunpowder</button>
+        <button onclick="setM('alive')" id="btn-alive" style="color:#0f0">Alive</button>
         <button onclick="setM('nuke')" id="btn-nuke" style="background:#ff0; color:#000">NUKE ☢️</button>
         <button onclick="setM('heat')" style="color:orange">Heat</button>
         <button onclick="setM('cool')" style="color:cyan">Cool</button>
@@ -32,7 +34,7 @@
     <canvas id="c"></canvas>
 
     <div class="stats">
-        MAT: <span id="m-ui">AIR</span> | TEMP: <span id="t-ui">20</span>°C | SIZE: <span id="s-ui">1</span>
+        MATERIAL: <span id="m-ui">AIR</span> | TEMP: <span id="t-ui">20</span>°C | BRUSH: <span id="s-ui">1</span>
     </div>
 
 <script>
@@ -46,18 +48,20 @@
     let cur = 'sand', mD = false, mx = 0, my = 0, brushR = 1;
 
     const mats = {
-        empty: { c: '#000', type: 'gas' },
-        sand: { c: '#edc9af', type: 'solid', grav: true, melt: 1200, to: 'lava' },
-        water: { c: '#0066ff', type: 'liquid', grav: true, boil: 100, bTo: 'steam', freeze: 0, fTo: 'ice' },
-        oil: { c: '#554422', type: 'liquid', grav: true, burn: 160 },
-        lava: { c: '#ff4500', type: 'liquid', grav: true, cool: 600, cTo: 'rock' },
-        rock: { c: '#666', type: 'solid', grav: false, melt: 1100, to: 'lava' },
-        ice: { c: '#aaddff', type: 'solid', grav: false, melt: 1, to: 'water' },
-        gunpowder: { c: '#444', type: 'solid', grav: true, burn: 100 },
-        nuke: { c: '#ffff00', type: 'solid', grav: true },
-        steam: { c: '#ffffff44', type: 'gas', life: 100 },
-        fire: { c: '#ff6600', type: 'gas', life: 20 },
-        smoke: { c: '#333', type: 'gas', life: 60 }
+        empty: { c: '#000', grav: false },
+        sand: { c: '#edc9af', grav: true, melt: 1200, to: 'lava' },
+        water: { c: '#0066ff', grav: true, boil: 100, bTo: 'boiling_water', freeze: 0, fTo: 'ice' },
+        boiling_water: { c: '#84b4ff', grav: true, boil: 100, to: 'steam' },
+        ice: { c: '#aaddff', grav: false, melt: 1, to: 'water' },
+        rock: { c: '#666', grav: false, melt: 1100, to: 'lava' },
+        lava: { c: '#ff4500', grav: true, cool: 600, cTo: 'rock' },
+        oil: { c: '#554422', grav: true, burn: 150 },
+        gunpowder: { c: '#444', grav: true, burn: 100 },
+        alive: { c: '#0f0', grav: false },
+        nuke: { c: '#ffff00', grav: true },
+        steam: { c: '#ffffff44', gas: true, life: 100 },
+        fire: { c: '#ff6600', gas: true, life: 20 },
+        smoke: { c: '#333', gas: true, life: 60 }
     };
 
     window.addEventListener('keydown', (e) => {
@@ -86,7 +90,7 @@
                 if(nx>=0 && nx<S && ny>=0 && ny<S) {
                     if(cur === 'heat') temp[nx][ny] += 400;
                     else if(cur === 'cool') temp[nx][ny] -= 400;
-                    else if(cur === 'empty' || grid[nx][ny] === 'empty') {
+                    else if(grid[nx][ny] === 'empty' || cur === 'empty') {
                         grid[nx][ny] = cur;
                         if(cur === 'lava') temp[nx][ny] = 1200;
                     }
@@ -108,38 +112,38 @@
 
                 // --- LÄMPÖTILA ---
                 if(info.melt && t > info.melt) next[x][y] = info.to;
-                if(info.boil && t > info.boil) { next[x][y] = info.bTo; nextTemp[x][y] += 50; }
+                if(info.boil && t > info.boil) next[x][y] = (m === 'water' ? 'boiling_water' : 'steam');
                 if(info.freeze && t < info.freeze) next[x][y] = info.fTo;
                 if(info.cool && t < info.cool) next[x][y] = info.cTo;
-                if(info.burn && t > info.burn) { next[x][y] = 'fire'; nextTemp[x][y] += 200; }
+                if(info.burn && t > info.burn) {
+                    next[x][y] = 'fire';
+                    nextTemp[x][y] += 100;
+                }
 
-                // --- GRAVITAATIO (Liquid & Solid toimivat nyt samalla logiikalla) ---
-                if(info.grav) {
-                    if(y < S-1) {
-                        // 1. Suoraan alas
-                        if(grid[x][y+1] === 'empty') {
-                            next[x][y] = 'empty'; next[x][y+1] = m;
-                        } 
-                        // 2. Viistosti alas (kuten hiekka)
-                        else {
-                            let dir = Math.random() > 0.5 ? 1 : -1;
-                            if(x+dir>=0 && x+dir<S && grid[x+dir][y+1] === 'empty') {
-                                next[x][y] = 'empty'; next[x+dir][y+1] = m;
-                            } else if(x-dir>=0 && x-dir<S && grid[x-dir][y+1] === 'empty') {
-                                next[x][y] = 'empty'; next[x-dir][y+1] = m;
-                            }
-                            // 3. VAIN NESTEET: Liiku suoraan sivuille jos ei pääse alas
-                            else if(info.type === 'liquid') {
-                                if(x+dir>=0 && x+dir<S && grid[x+dir][y] === 'empty') {
-                                    next[x][y] = 'empty'; next[x+dir][y] = m;
-                                }
-                            }
+                // --- ALIVE PIXEL (Ei monistu, liikkuu rauhassa) ---
+                if(m === 'alive' && Math.random() > 0.9) {
+                    let dx = Math.floor(Math.random()*3)-1;
+                    let dy = Math.floor(Math.random()*3)-1;
+                    if(x+dx>=0 && x+dx<S && y+dy>=0 && y+dy<S && grid[x+dx][y+dy] === 'empty') {
+                        next[x][y] = 'empty'; next[x+dx][y+dy] = 'alive';
+                    }
+                }
+
+                // --- GRAVITAATIO (Kaikki "nesteet" toimivat kuin hiekka) ---
+                if(info.grav && y < S-1) {
+                    if(grid[x][y+1] === 'empty') {
+                        next[x][y] = 'empty'; next[x][y+1] = m;
+                    } else {
+                        // Sivuttainen valuminen (hiekkakasa-efekti)
+                        let d = Math.random() > 0.5 ? 1 : -1;
+                        if(x+d>=0 && x+d<S && grid[x+d][y+1] === 'empty') {
+                            next[x][y] = 'empty'; next[x+d][y+1] = m;
                         }
                     }
                 }
 
-                // --- KAASUT ---
-                if(info.type === 'gas') {
+                // --- KAASUT (Höyry jne) ---
+                if(info.gas) {
                     if(y > 0) {
                         let dx = Math.floor(Math.random()*3)-1;
                         if(x+dx>=0 && x+dx<S && grid[x+dx][y-1] === 'empty') {
@@ -149,25 +153,27 @@
                     if(Math.random() > 0.97) next[x][y] = 'empty';
                 }
 
-                // --- VUOROVAIKUTUKSET (Vesi + Laava) ---
-                if(m === 'water' && y < S-1 && grid[x][y+1] === 'lava') {
-                    next[x][y] = 'steam'; next[x][y+1] = 'rock';
+                // --- VUOROVAIKUTUKSET ---
+                if(m === 'lava' && y < S-1 && grid[x][y+1] === 'water') {
+                    next[x][y+1] = 'steam'; next[x][y] = 'rock';
                 }
-
+                
                 // --- NUKE ---
                 if(m === 'nuke' && t > 200) {
                     for(let i=-25; i<=25; i++) for(let j=-25; j<=25; j++) {
                         let nx=x+i, ny=y+j;
                         if(nx>=0 && nx<S && ny>=0 && ny<S && Math.sqrt(i*i+j*j)<20) {
-                            next[nx][ny] = Math.random()>0.4 ? 'fire' : 'smoke';
-                            nextTemp[nx][ny] = 3000;
+                            next[nx][ny] = Math.random()>0.5 ? 'fire' : 'smoke';
+                            nextTemp[nx][ny] = 2500;
                         }
                     }
                 }
             }
         }
         grid = next;
-        // Tasaa lämpöä ja palauta kohti huoneenlämpöä
+        temp = nextTemp;
+        
+        // Huoneenlämpöön palautuminen
         for(let i=0; i<S; i++) for(let j=0; j<S; j++) {
             if(temp[i][j] > 20) temp[i][j] -= 1;
             if(temp[i][j] < 20) temp[i][j] += 1;
