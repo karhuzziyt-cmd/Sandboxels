@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sandbox game</title>
+    <style>
+        :root {
+            --primary: #00ff00;
+            --bg: #0a0a0a;
+            --card: #151515;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg);
+            color: white;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Hero Section */
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 4rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            color: var(--primary);
+            text-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+
+        .play-btn {
+            padding: 20px 50px;
+            font-size: 1.5rem;
+            background: var(--primary);
+            color: black;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+            transition: 0.3s;
+            box-shadow: 0 0 15px var(--primary);
+            margin-top: 30px;
+        }
+
+        .play-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px var(--primary);
+        }
+
+        /* About Section */
+        .container {
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+
+        .card {
+            background: var(--card);
+            padding: 30px;
+            border-radius: 15px;
+            border-left: 5px solid var(--primary);
+            margin-bottom: 30px;
+        }
+
+        h2 { color: var(--primary); }
+
+        /* Contact Form */
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background: #222;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 5px;
+        }
+
+        .send-btn {
+            background: #333;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            padding: 10px 25px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px;
+            color: #555;
+            border-top: 1px solid #222;
+        }
+    </style>
+</head>
+<body>
+
+    <section class="hero">
+        <h1>SANDBOXELS :)</h1>
+        <p>2D physics game </p>
+        <a href="game.html" class="play-btn">PLAY GAME</a>
+    </section>
+
+    <div class="container">
+        <section class="card">
+            <h2>About the Creator</h2>
+            <p>Welcome to my simulation world! Sandboxels was built to push the limits of web-based physics engines.</p>
+            <ul>
+                <li><strong>Engine:</strong> Custom JavaScript</li>
+                <li><strong>Features:</strong> Thermal dynamics, fluid simulation, and nuclear physics.</li>
+               
+            </ul>
+        </section>
+
+        <section class="card">
+            <h2>Contact & Support</h2>
+            <p>Found a bug or have a suggestion? Reach out to me! (this form doesnt wor yet!)</p>
+            <form action="#">
+                <input type="text" placeholder="Your Name" required>
+                <input type="email" placeholder="Your email" required>
+                <textarea placeholder="Your Message..." rows="5" required></textarea>
+                <button type="submit" class="send-btn">SEND MESSAGE</button>
+            </form>
+        </section>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Veeti Savolainen MOs Games. All rights reserved.</p>
+    </footer>
+
+</body>
+</html>
